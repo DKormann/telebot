@@ -3,7 +3,8 @@ from telegram import Update
 from telegram.ext import filters, ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes
 from chat import ChatSession
 
-key = "6948341501:AAGMiHgrgOhJXy0NC3bS1wYv7ph8vrKPcPI"
+import os
+
 
 sessions:dict[any,ChatSession] = {}
 
@@ -28,7 +29,7 @@ async def chat_fn(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sess = getsession(context,chat_id)
     await sess.answer_chat_message(msg)
 
-app = ApplicationBuilder().token(key).build()
+app = ApplicationBuilder().token(os.environ.get("telegram_key")).build()
 
 echo_handler = MessageHandler(filters.TEXT & (~filters.COMMAND), chat_fn)
 

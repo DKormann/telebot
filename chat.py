@@ -31,6 +31,27 @@ tools = [
       },
     },
   },
+  # {
+  #   "type": "function",
+  #   "function": {
+  #     "name": "create_function",
+  #     "description": "create a new python function.",
+  #     "parameters": {
+  #       "type": "object",
+  #       "properties": {
+  #         "title": {
+  #           "type": "string",
+  #           "description": "only the title of the new function",
+  #         },
+  #         "description":{
+  #           "type": "string",
+  #           "description": "description of the function that should be created.",
+  #         }
+  #       },
+  #       "required": ["title","description"],
+  #     },
+  #   },
+  # },
   {
     "type": "function",
     "function": {
@@ -52,6 +73,23 @@ tools = [
       },
     },
   },
+  {
+    "type": "function",
+    "function": {
+      "name": "remove_timer",
+      "description": "remove the timer with given description, returns True if the timer was found and removed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "description": "description of the timer",
+          },
+        },
+        "required": ["description"],
+      },
+    },
+  },
 ]
 
 
@@ -67,10 +105,32 @@ class ChatSession:
 
     self.methods = {
       "exec": execute_code,
-      "python": execute_code,
-      "eval": evaluate_code,
+      "python":execute_code,
+      "create_function": self.create_function,
       "timer": self.timer,
+      "remove_timer": self.remove_timer,
     }
+
+  def create_function(self, title:str, description:str):
+    print('creating function', title)
+    messages = self.history[-5:-1]
+
+    messages += [{"role":"system","content":f"write the function {title}. {description}"}]
+
+    completion = client.chat.completions.create(
+      model="gpt-3.5-turbo",
+      messages = messages,
+      stream = False
+    )
+
+    code = completion.choices[0].message.content
+
+    print()
+    print()
+    print(code)
+    print()
+    print()
+
 
   async def alarm(self,context):
     job = context.job
@@ -80,6 +140,14 @@ class ChatSession:
 
   def timer(self,seconds:int,description:str):
     self.ctx.job_queue.run_once(self.alarm, seconds, chat_id=self.id, name=description, data=seconds)
+
+  def remove_timer(self,description):
+    current_jobs = self.ctx.job_queue.get_jobs_by_name(description)
+    if not current_jobs:
+        return False
+    for job in current_jobs:
+        job.schedule_removal()
+    return True
 
   def add_message(self, role:Role,content:str): self.history.append({"role":role,"content":content})
 

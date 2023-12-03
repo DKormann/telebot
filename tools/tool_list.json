@@ -1,0 +1,7 @@
+[
+    {
+        "title": "set_timer",
+        "description": "create a timer object",
+        "code": "def set_timer(seconds:int,description:str):\n    print(f\"creating timer {seconds,description}\")"
+    }
+]
