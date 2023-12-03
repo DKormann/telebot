@@ -105,7 +105,7 @@ class ChatSession:
 
     self.methods = {
       "exec": execute_code,
-      "python":execute_code,
+      "python": execute_code,
       "create_function": self.create_function,
       "timer": self.timer,
       "remove_timer": self.remove_timer,
@@ -194,7 +194,7 @@ class ChatSession:
           ret = self.methods[toolcall.function.name](args)
         ret = str(ret)[-200:]
 
-        fn_msg = f"Executed function call {toolcall.function.name}({args}). Response: {ret if not ret is None else 'ok'}."
+        fn_msg = f"Executed function call {toolcall.function.name}({args}). Response: {ret if not (ret is None) else 'ok'}."
         print(fn_msg)
 
         self.add_message("system", fn_msg)
