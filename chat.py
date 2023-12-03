@@ -1,0 +1,153 @@
+from openai import OpenAI
+import os
+from typing import Literal
+from methods import execute_code, evaluate_code
+import json
+
+
+client = OpenAI(
+  api_key=os.environ.get("RIVERKEY"),
+)
+
+sysprompt = "You are Akira a helpfull chat assistant."
+
+Role = Literal["user","assistant","system"]
+
+tools = [
+  {
+    "type": "function",
+    "function": {
+      "name": "exec",
+      "description": "Execute any python code, if you cannot answer a request straight up. The exec function does not return values. You need to print results.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "python code to execute",
+          },
+        },
+        "required": ["code"],
+      },
+    },
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "timer",
+      "description": "Set a timer for x seconds in the future.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "seconds": {
+            "type": "number",
+            "description": "delay in seconds",
+          },
+          "description":{
+            "type": "string",
+            "description": "short description or message for the timer"
+          }
+        },
+        "required": ["seconds","description"],
+      },
+    },
+  },
+]
+
+
+class ChatSession:
+
+  def __init__(self, ctx, chat_id):
+    self.id = chat_id
+    self.ctx = ctx
+    self.history = [
+      {"role": "system", "content": sysprompt},
+      ]
+    self.reply_buffer = ""
+
+    self.methods = {
+      "exec": execute_code,
+      "python": execute_code,
+      "eval": evaluate_code,
+      "timer": self.timer,
+    }
+
+  async def alarm(self,context):
+    job = context.job
+    # await self.send(f"{job.name}")
+    self.add_message("system", f"timer finished: {job.name}")
+    await self.react()
+
+  def timer(self,seconds:int,description:str):
+    self.ctx.job_queue.run_once(self.alarm, seconds, chat_id=self.id, name=description, data=seconds)
+
+  def add_message(self, role:Role,content:str): self.history.append({"role":role,"content":content})
+
+  def reset (self):
+    self.history = [{"role": "system", "content": sysprompt},]
+
+  async def react(self,messages = None):
+    print("interacting ...")
+    if messages is None: messages = self.history
+    print(messages)
+    completion = client.chat.completions.create(
+      model="gpt-3.5-turbo",
+      messages = self.history[-10:],
+      tools = tools,
+      stream =True
+    )
+    assistant_message = ""
+
+    for chunk in completion:
+      if chunk.choices[0].delta.tool_calls:
+        await self.func_call(chunk.choices[0].delta.tool_calls[0], completion)
+      content = chunk.choices[0].delta.content
+      if not content is None:
+        assistant_message += content
+        await self.send_message(content, end="",flush=True)
+    await self.send_message()
+
+    self.add_message("assistant",assistant_message)
+
+  async def func_call(self,toolcall, completion):
+    print('calling function',toolcall.function.name)
+    args = ""
+    for chunk in completion:
+      call = chunk.choices[0].delta.tool_calls
+      if call:
+        args += call[0].function.arguments
+      else:
+        try: args = json.loads(args)
+        except:pass
+        print(args)
+        if type(args) == dict:
+          ret = self.methods[toolcall.function.name](**args)
+        else:
+          ret = self.methods[toolcall.function.name](args)
+        ret = str(ret)[-200:]
+
+        fn_msg = f"Executed function call {toolcall.function.name}({args}). Response: {ret if not ret is None else 'ok'}."
+        print(fn_msg)
+
+        self.add_message("system", fn_msg)
+        await self.react()
+
+  async def answer_chat_message(self, msg:str):
+    self.add_message("user",msg)
+    await self.react()
+
+  async def send(self,msg):
+    await self.ctx.bot.send_message(chat_id = self.id,text=msg)
+
+  async def send_message(self,msg = "" ,end="\n",flush = False):
+      self.reply_buffer += msg + end
+      if self.reply_buffer.count("```")  == 1: return # wait for end of code
+      if self.reply_buffer.count("```") == 2:
+          await self.send(self.reply_buffer)
+          self.reply_buffer = ""
+      buf = self.reply_buffer.split("\n")
+      for p in buf[:-1]:
+          if p != "" : await self.send(p)
+      self.reply_buffer = buf[-1]
+
+
