@@ -20,14 +20,8 @@ def execute_code (code:str):
 
     last_line = code.split("\n")[-1]
     if last_line.lstrip() == last_line:
-        try:
-            __results_str += "\n" + str(eval(last_line,namespace))
-
-        except Exception as e:
-            print('error on lastline',e)
-    
-    print("returning", __results_str)
-
+        try: __results_str += "\n" + str(eval(last_line,namespace))
+        except Exception as e: print('error on lastline',e)
     return __results_str
 
 def evaluate_code (code:str):
@@ -40,5 +34,20 @@ def evaluate_code (code:str):
         namespace[k] = loc[k]
     return __results_str + str(ret)
 
-def set_timer(seconds: int, description: str, context):
-    context.job_queue.run_once(alarm, due, chat_id=chat_id, name=str(chat_id), data=due)
+
+async def alarm(session,ctx):
+    job = ctx.job
+    session.add_message("system", f"timer finished: {job.name}")
+    await session.react()
+
+def set_timer(seconds: int, description: str,session):
+    session.ctx.job_queue.run_once(lambda ctx :alarm(session,ctx), seconds, chat_id=session.id, name=description, data=seconds)
+
+import datetime
+
+def set_alarm_24h_format(hours: int, minutes: int, description:str, session ):
+    delta_hours = datetime.datetime.now().hour - hours
+    delta_minutes = datetime.datetime.now().minute - minutes
+    due = (delta_hours * 60 + delta_minutes) * 60
+    if due < 0 : due += 24 * 60 * 60
+    set_timer(due,description,session)

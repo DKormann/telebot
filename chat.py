@@ -55,7 +55,7 @@ tools = [
   {
     "type": "function",
     "function": {
-      "name": "timer",
+      "name": "set_timer",
       "description": "Set a timer for x seconds in the future.",
       "parameters": {
         "type": "object",
@@ -76,22 +76,32 @@ tools = [
   {
     "type": "function",
     "function": {
-      "name": "remove_timer",
-      "description": "remove the timer with given description, returns True if the timer was found and removed.",
+      "name": "set_alarm",
+      "description": "set alarm for a specific time.",
       "parameters": {
         "type": "object",
         "properties": {
-          "description": {
-            "type": "string",
-            "description": "description of the timer",
+          "hours": {
+            "type": "number",
+            "description": "the hour of the time in 24h format.",
           },
+          "minutes": {
+            "type": "number",
+            "description": "the minutes of the time in 24h format.",
+          },
+          "description":{
+            "type": "string",
+            "description": "short description or message for the timer"
+          }
         },
-        "required": ["description"],
+        "required": ["hours","minutes","description"],
       },
     },
   },
+  
 ]
 
+from methods import set_timer, set_alarm_24h_format
 
 class ChatSession:
 
@@ -107,8 +117,10 @@ class ChatSession:
       "exec": execute_code,
       "python": execute_code,
       "create_function": self.create_function,
-      "timer": self.timer,
-      "remove_timer": self.remove_timer,
+
+      "set_timer": lambda seconds, description: set_timer(seconds, description, self),
+      "set_alarm": lambda hours, minutes, description: set_alarm_24h_format(hours,minutes,description,self),
+      # "remove_timer": self.remove_timer,
     }
 
   def create_function(self, title:str, description:str):
@@ -131,15 +143,8 @@ class ChatSession:
     print()
     print()
 
-
-  async def alarm(self,context):
-    job = context.job
-    # await self.send(f"{job.name}")
-    self.add_message("system", f"timer finished: {job.name}")
-    await self.react()
-
-  def timer(self,seconds:int,description:str):
-    self.ctx.job_queue.run_once(self.alarm, seconds, chat_id=self.id, name=description, data=seconds)
+  # def timer(self,seconds:int,description:str):
+  #   self.ctx.job_queue.run_once(self.alarm, seconds, chat_id=self.id, name=description, data=seconds)
 
   def remove_timer(self,description):
     current_jobs = self.ctx.job_queue.get_jobs_by_name(description)
