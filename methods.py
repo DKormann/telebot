@@ -41,13 +41,14 @@ async def alarm(session,ctx):
     await session.react()
 
 def set_timer(seconds: int, description: str,session):
+    print("timer set for", seconds)
     session.ctx.job_queue.run_once(lambda ctx :alarm(session,ctx), seconds, chat_id=session.id, name=description, data=seconds)
 
 import datetime
 
 def set_alarm_24h_format(hours: int, minutes: int, description:str, session ):
-    delta_hours = datetime.datetime.now().hour - hours
-    delta_minutes = datetime.datetime.now().minute - minutes
+    delta_hours = hours - datetime.datetime.now().hour
+    delta_minutes = minutes - datetime.datetime.now().minute
     due = (delta_hours * 60 + delta_minutes) * 60
     if due < 0 : due += 24 * 60 * 60
     set_timer(due,description,session)
