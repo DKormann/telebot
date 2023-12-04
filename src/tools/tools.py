@@ -1,4 +1,3 @@
-import json
 
 class Tool:
     def __init__(self, data):
@@ -10,4 +9,4 @@ class Tool:
         self.fn = locals()[self.title]
 
     def __call__(self, *args, **kwargs):
-        return self.fn(*args,**kwargs)
+        return self.fn(*args, **kwargs)
