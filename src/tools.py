@@ -13,7 +13,7 @@ client = OpenAI(
     api_key=os.getenv('OPENAI_API_KEY')
 )
 
-tool_file = "tools.json"
+tool_file = "src/tools.json"
 
 json_format_function_prompt = """Your response should be in JSON format, like this:
 {
