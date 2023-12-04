@@ -7,6 +7,8 @@ import os
 import json
 from dotenv import load_dotenv
 
+from inspect import iscoroutine
+
 load_dotenv()
 
 client = OpenAI(
@@ -135,6 +137,23 @@ tools = [
 ]
 
 
+
+async def timer(seconds: int, description: str):
+    global chat_session
+
+    class Alarm():
+        def __init__(self,chat_session): self.chat_session = chat_session
+        async def __call__(self,context):
+            job = context.job
+            self.chat_session.add_message("system", f"timer finished: {job.name}")
+            await self.chat_session.react()
+
+    chat_session.ctx.job_queue.run_once(
+        Alarm(chat_session), seconds, chat_id=chat_session.id, name=description, data=seconds)
+
+# def set_alarm(hours: int, minutes, description: str):
+    
+
 class Tools:
     def __init__(self, session):
         self.chat_session = session
@@ -142,7 +161,7 @@ class Tools:
             "exec": execute_code,
             "python": execute_code,
             "add_function": self.add_function,
-            "timer": self.timer,
+            "timer": timer,
             "remove_timer": self.remove_timer,
             "create_image": self.create_image,
         }
@@ -168,7 +187,7 @@ class Tools:
         except Exception:
             pass
 
-    async def create_image(self, text: str, model="dall-e-2"):
+    async def create_image(self, text: str, model="dall-e-3"):
         response = client.images.generate(
             model=model,
             prompt=text,
@@ -210,7 +229,7 @@ class Tools:
         })
         # save to file
         with open(tool_file, "w") as f:
-            json.dump(saved_tools, f)
+            json.dump(saved_tools, f, indent=4)
 
         # add function to methods
         exec(code["code"])
@@ -222,16 +241,6 @@ class Tools:
         })
 
         return 'function added'
-
-    async def alarm(self, context):
-        job = context.job
-        # await self.send(f"{job.name}")
-        self.chat_session.add_message("system", f"timer finished: {job.name}")
-        await self.chat_session.react()
-
-    async def timer(self, seconds: int, description: str):
-        self.chat_session.ctx.job_queue.run_once(
-            self.alarm, seconds, chat_id=self.chat_session.id, name=description, data=seconds)
 
     async def remove_timer(self, description):
         current_jobs = self.chat_session.ctx.job_queue.get_jobs_by_name(
@@ -247,11 +256,15 @@ class Tools:
               toolcall.function.arguments)
 
         args = toolcall.function.arguments
+        globals()['chat_session'] = self.chat_session
         try:
             args = json.loads(args)
-            ret = await self.methods[toolcall.function.name](**args)
+            ret = self.methods[toolcall.function.name](**args)
         except Exception:
-            ret = await self.methods[toolcall.function.name](args)
+            ret = self.methods[toolcall.function.name](args)
+        if iscoroutine(ret): ret = await ret
+
+        del globals()['chat_session']
 
         ret = str(ret)[-500:]
 
