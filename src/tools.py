@@ -77,6 +77,31 @@ tools = [
     {
         "type": "function",
         "function": {
+            "name": "set_alarm",
+            "description": "Set an alarm for a time in the future.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "hours": {
+                        "type": "number",
+                        "description": "hours of the time",
+                    },
+                    "minutes": {
+                        "type": "number",
+                        "description": "minutes of the time",
+                    },
+                    "description": {
+                        "type": "string",
+                        "description": "short description or message for the timer"
+                    }
+                },
+                "required": ["hours", "minutes", "description"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "remove_timer",
             "description": "remove the timer with given description, returns True if the timer was found and removed.",
             "parameters": {
@@ -138,7 +163,7 @@ tools = [
 
 
 
-async def timer(seconds: int, description: str):
+def timer(seconds: int, description: str):
     global chat_session
 
     class Alarm():
@@ -151,8 +176,15 @@ async def timer(seconds: int, description: str):
     chat_session.ctx.job_queue.run_once(
         Alarm(chat_session), seconds, chat_id=chat_session.id, name=description, data=seconds)
 
-# def set_alarm(hours: int, minutes, description: str):
-    
+def set_alarm(hours: int, minutes:int, description: str):
+    import datetime
+    now_hours = datetime.datetime.now().hour
+    now_minutes = datetime.datetime.now().minute
+
+    deltas = (((hours - now_hours) * 60) + minutes - now_minutes)*60
+    if deltas < 0 : deltas += 24 * 360
+    timer (deltas, description)
+
 
 class Tools:
     def __init__(self, session):
@@ -162,11 +194,13 @@ class Tools:
             "python": execute_code,
             "add_function": self.add_function,
             "timer": timer,
+            "set_alarm":set_alarm,
             "remove_timer": self.remove_timer,
             "create_image": self.create_image,
         }
 
         self.load_tools()
+        self.print = self.chat_session.log
 
     def load_tools(self):
         try:
@@ -252,7 +286,7 @@ class Tools:
         return True
 
     async def tool_call(self, toolcall):
-        print('calling function', toolcall.function.name,
+        await self.print('calling function', toolcall.function.name,
               toolcall.function.arguments)
 
         args = toolcall.function.arguments
@@ -269,7 +303,7 @@ class Tools:
         ret = str(ret)[-500:]
 
         fn_msg = f"Executed function call {toolcall.function.name}({args}). Response: {ret if (ret is not None) else 'ok'}."
-        print(fn_msg)
+        await self.print(fn_msg)
 
         self.chat_session.add_message("system", fn_msg)
         await self.chat_session.react()

@@ -22,6 +22,10 @@ async def reset_chat(update: Update, context: ContextTypes.DEFAULT_TYPE):
     getsession(context, update.effective_chat.id).reset()
     await context.bot.send_message(chat_id=update.effective_chat.id, text="<chat reset>")
 
+async def debug_mode(update:Update, context: ContextTypes.DEFAULT_TYPE):
+    sess = getsession(context, update.effective_chat.id)
+    sess.toggle_debug_mode()
+    await context.bot.send_message(chat_id=update.effective_chat.id, text=f"<debug mode set {sess.debug_mode}>")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     getsession(context, update.effective_chat.id).add_message(
@@ -46,6 +50,8 @@ def run_bot():
 
     app.add_handler(CommandHandler("reset", reset_chat))
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("debug", debug_mode))
     app.add_handler(echo_handler)
+
 
     app.run_polling()

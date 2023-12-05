@@ -21,11 +21,19 @@ class ChatSession:
     def __init__(self, ctx, chat_id):
         self.id = chat_id
         self.ctx = ctx
+        self.debug_mode = False
         self.history = [
             {"role": "system", "content": sysprompt},
         ]
 
         self.tools = Tools(self)
+    
+    def toggle_debug_mode(self):self.debug_mode = not self.debug_mode
+
+    async def log(self,*args, **kwargs):
+        print(*args)
+        if self.debug_mode: await self.send_message("<log>: "+str(args))
+
 
     def add_message(self, role: Role, content: str): self.history.append(
         {"role": role, "content": content})
