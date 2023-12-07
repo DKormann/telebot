@@ -17,11 +17,13 @@ sysprompt = f"You are {bot_name} a helpful chat assistant."
 Role = Literal["user", "assistant", "system"]
 
 
+
 class ChatSession:
     def __init__(self, ctx, chat_id):
         self.id = chat_id
         self.ctx = ctx
         self.debug_mode = False
+        self.is_admin = False
         self.history = [
             {"role": "system", "content": sysprompt},
         ]
@@ -34,12 +36,10 @@ class ChatSession:
         print(*args)
         if self.debug_mode: await self.send_message("<log>: "+str(args))
 
-
     def add_message(self, role: Role, content: str): self.history.append(
         {"role": role, "content": content})
 
-    def reset(self):
-        self.history = [{"role": "system", "content": sysprompt},]
+    def reset(self): self.history = [{"role": "system", "content": sysprompt},]
 
     async def react(self):
         completion = client.chat.completions.create(
@@ -62,6 +62,5 @@ class ChatSession:
         await self.ctx.bot.send_document(chat_id=self.id, document=doc)
 
     async def send_message(self, msg: str):
-        self.add_message(
-            "assistant", msg)
+        self.add_message("assistant", msg)
         await self.ctx.bot.send_message(chat_id=self.id, text=msg)
