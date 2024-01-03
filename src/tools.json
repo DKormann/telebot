@@ -1,1 +1,87 @@
-[{"type": "function", "function": {"name": "helloWorld", "description": "This function takes a language as input and returns 'Hello World' in that language.", "parameters": {"type": "object", "properties": {"language": {"type": "string", "description": "The language for which 'Hello World' should be generated. It supports English, German, Spanish, Portuguese, and French."}}, "required": ["language"]}, "code": "async def helloWorld(language):\n    if language.lower() == 'english':\n        return 'Hello World'\n    elif language.lower() == 'german':\n        return 'Hallo Welt'\n    elif language.lower() == 'spanish':\n        return 'Hola Mundo'\n    elif language.lower() == 'portuguese':\n        return 'Ol\u00e1 Mundo'\n    elif language.lower() == 'french':\n        return 'Bonjour le Monde'\n    else:\n        return 'Language not supported'"}}, {"type": "function", "function": {"name": "execute_python_code", "description": "Execute any python code", "parameters": {"type": "object", "properties": {"code": {"type": "string", "description": "Python code to be executed"}}, "required": ["code"]}, "code": "async def execute_python_code(code):\n    try:\n        exec(code)\n        return {'result': 'Code executed successfully'}\n    except Exception as e:\n        return {'error': str(e)}"}}, {"type": "function", "function": {"name": "helloWorld", "description": "This function takes a language as input and returns 'Hello World' in that language.", "parameters": {"type": "object", "properties": {"language": {"type": "string", "description": "The english name of the language in which 'Hello World' should be returned, lowercase"}}, "required": ["language"]}, "code": "async def helloWorld(language):\n    hello_world_map = {\n        'english': 'Hello World',\n        'spanish': 'Hola Mundoooo',\n        'french': 'Bonjour le mondeee',\n        'german': 'Hallo Weld',\n        # Add more languages as needed\n    }\n    return hello_world_map.get(language, 'Language not supported')"}}]
+[
+    {
+        "type": "function",
+        "function": {
+            "name": "helloWorld",
+            "description": "This function takes a language as input and returns 'Hello World' in that language.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "language": {
+                        "type": "string",
+                        "description": "The language for which 'Hello World' should be generated. It supports English, German, Spanish, Portuguese, and French."
+                    }
+                },
+                "required": [
+                    "language"
+                ]
+            },
+            "code": "async def helloWorld(language):\n    if language.lower() == 'english':\n        return 'Hello World'\n    elif language.lower() == 'german':\n        return 'Hallo Welt'\n    elif language.lower() == 'spanish':\n        return 'Hola Mundo'\n    elif language.lower() == 'portuguese':\n        return 'Ol\u00e1 Mundo'\n    elif language.lower() == 'french':\n        return 'Bonjour le Monde'\n    else:\n        return 'Language not supported'"
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "execute_python_code",
+            "description": "Execute any python code",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "code": {
+                        "type": "string",
+                        "description": "Python code to be executed"
+                    }
+                },
+                "required": [
+                    "code"
+                ]
+            },
+            "code": "async def execute_python_code(code):\n    try:\n        exec(code)\n        return {'result': 'Code executed successfully'}\n    except Exception as e:\n        return {'error': str(e)}"
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "helloWorld",
+            "description": "This function takes a language as input and returns 'Hello World' in that language.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "language": {
+                        "type": "string",
+                        "description": "The english name of the language in which 'Hello World' should be returned, lowercase"
+                    }
+                },
+                "required": [
+                    "language"
+                ]
+            },
+            "code": "async def helloWorld(language):\n    hello_world_map = {\n        'english': 'Hello World',\n        'spanish': 'Hola Mundoooo',\n        'french': 'Bonjour le mondeee',\n        'german': 'Hallo Weld',\n        # Add more languages as needed\n    }\n    return hello_world_map.get(language, 'Language not supported')"
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_current_weather",
+            "description": "This function retrieves the current weather information for a given city using the OpenWeatherMap API.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {
+                        "type": "string",
+                        "description": "The name of the city to retrieve the weather information for."
+                    },
+                    "api_key": {
+                        "type": "string",
+                        "description": "Your OpenWeatherMap API key."
+                    }
+                },
+                "required": [
+                    "city",
+                    "api_key"
+                ]
+            },
+            "code": "async def get_current_weather(city, api_key):\n    # implementation of the function\n    return weather_data"
+        }
+    }
+]

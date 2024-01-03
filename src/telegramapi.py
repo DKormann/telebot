@@ -3,7 +3,7 @@ from chat import ChatSession
 from telegram import Update
 from telegram.ext import filters, ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes
 from dotenv import load_dotenv
-import logging
+# import logging
 import asyncio
 import database
 
@@ -33,7 +33,6 @@ def run_bot():
     app.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), chat_fn))
 
     async def attachmentHandler(update:Update, context:ContextTypes.DEFAULT_TYPE):print(update)
-
     app.add_handler(MessageHandler(filters.ATTACHMENT, attachmentHandler))
 
     def commandHandle (fn): app.add_handler(CommandHandler(fn.__name__, handle(fn)))
@@ -47,7 +46,7 @@ def run_bot():
             update.message.from_user.username,
         ]))
         try: database.insert_chat(chat_id, username)
-        except:pass 
+        except:pass
         await sess.send_message(f"Konichiwa, {username}")
 
     @commandHandle
@@ -74,13 +73,15 @@ def run_bot():
     @commandHandle
     async def messagefriend(sess:ChatSession, update:Update):
         args = update.message.text.split()[1:]
-        if len(args) < 2:sess.send_message("<usage: /message_friend friendname hello there")
+        if len(args) < 2:return await sess.send_message("<usage: /message_friend friendname hello there")
         target = args[0]
         message = " ".join(args[1:])
         print(f"sending {message} to {target}")
         target_user_id = database.get_chat_by_username(target)
-        if len(target_user_id) == 0:sess.send_message(f"cant find {target}")
+        if len(target_user_id) == 0: await sess.send_message(f"cant find {target}")
+        target_user_id = target_user_id[0]['id']
+        await sess.ctx.bot.send_message(chat_id = target_user_id, text = message)
+        
         print(target_user_id)
-
 
     app.run_polling()

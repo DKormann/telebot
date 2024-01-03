@@ -17,7 +17,6 @@ sysprompt = f"You are {bot_name} a helpful chat assistant."
 Role = Literal["user", "assistant", "system"]
 
 
-
 class ChatSession:
     def __init__(self, ctx, chat_id):
         self.id = chat_id
@@ -36,8 +35,7 @@ class ChatSession:
         print(*args)
         if self.debug_mode: await self.send_message("<log>: "+str(args))
 
-    def add_message(self, role: Role, content: str): self.history.append(
-        {"role": role, "content": content})
+    def add_message(self, role: Role, content: str): self.history.append({"role": role, "content": content})
 
     def reset(self): self.history = [{"role": "system", "content": sysprompt},]
 
