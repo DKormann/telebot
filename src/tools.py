@@ -182,7 +182,7 @@ def set_alarm(hours: int, minutes:int, description: str):
     now_minutes = datetime.datetime.now().minute
 
     deltas = (((hours - now_hours) * 60) + minutes - now_minutes)*60
-    if deltas < 0 : deltas += 24 * 360
+    if deltas < 0 : deltas += 24 * 3600
     timer (deltas, description)
 
 
